@@ -33,9 +33,10 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 
-import org.springframework.stereotype.Controller;
+//import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 //import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -44,16 +45,17 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * @author tam
  */
 
-@Controller
-@RequestMapping ("/")
+@RestController
+//@RequestMapping ("/")
 public class ExportController {
     //private JdbcTemplate jdbcTemplate = new JdbcTemplate(WebConfig.getDataSource());
-    @Autowired
-    private WebConfig WebConfig;
+    /*@Autowired
+    private WebConfig WebConfig;*/
 
-    @RequestMapping(value={"/","/welcome"}, method = RequestMethod.GET)
+
+    @RequestMapping(value="/welcome", method = RequestMethod.GET)
     public String getHomePage(ModelMap model) {
-        return "welcome";
+        return "welcome1";
     }
 
     @RequestMapping(value="/download/", method = RequestMethod.GET)
@@ -140,5 +142,5 @@ public class ExportController {
             }
         }
     }
-    
+
 }
