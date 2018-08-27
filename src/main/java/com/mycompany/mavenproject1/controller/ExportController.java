@@ -7,12 +7,14 @@ package com.mycompany.mavenproject1.controller;
 
 import com.mycompany.mavenproject1.util.MyTableInfo;
 import com.mycompany.mavenproject1.config.WebConfig;
+import java.io.BufferedInputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -22,6 +24,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -37,10 +40,12 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 
 //import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.util.FileCopyUtils;
 //import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  *
@@ -60,14 +65,17 @@ public class ExportController {
         return "welcome1";
     }
 
-    @RequestMapping(value="/download", method = RequestMethod.GET)
-    public void  generateExcel() throws SQLException, ClassNotFoundException, FileNotFoundException, IOException{
+    //@RequestMapping(value="/download", method = RequestMethod.GET)
+    @RequestMapping(value = "/download", method = RequestMethod.GET, produces = "application/vnd.ms-excel")
+    public void  generateExcel(HttpServletResponse response) throws SQLException, ClassNotFoundException, FileNotFoundException, IOException{
             Workbook wb = null;
             Connection conn = null;
             PreparedStatement stmt = null;
             ResultSet rs = null;
+            File file = null;
             Class.forName("com.mysql.jdbc.Driver");
         try {
+            InputStream inputStream = null;
             conn = DriverManager.getConnection(WebConfig.URL,WebConfig.USERNAME,WebConfig.PASSWORD);
             //New Workbook
             wb = new SXSSFWorkbook(2000);
@@ -81,7 +89,8 @@ public class ExportController {
             cs.setFont(f);
             //New Sheet
             Sheet sheet1 = wb.createSheet("myData");
-            String sql = "SELECT * FROM member_data WHERE 1";
+            //String sql = "SELECT * FROM member_data WHERE 1";
+            String sql = "call track_title(0)";
             stmt = conn.prepareStatement(sql);
             rs = stmt.executeQuery();
            // System.out.println(rs);
@@ -146,14 +155,21 @@ public class ExportController {
         out.flush();*/
 
   // Write the output to a file
-        FileOutputStream fileOut = new FileOutputStream("/home/tam/Documents/poi-generated-file.xlsx");
+        FileOutputStream fileOut = new FileOutputStream("poi-generated-file.xlsx");
         wb.write(fileOut);
         fileOut.close();
 
+        file = new File("poi-generated-file.xlsx");
+
+        inputStream = new BufferedInputStream(new FileInputStream(file));
+        response.setHeader("Content-Disposition", "attachment; filename=TrackTitle.xlsx");
+        response.setHeader("Content-Type", "application/vnd.ms-excel");
+        FileCopyUtils.copy(inputStream, response.getOutputStream());
+
             /*System.out.println("data written");
             String excelFile = "/home/tam/Documents/export.xlsx";
-            wb.write(new FileOutputStream(excelFile));*/
-            System.out.println("Completed");	
+            wb.write(new FileOutputStream(excelFile));
+            System.out.println("Completed");*/
         }
         finally{
             try{
