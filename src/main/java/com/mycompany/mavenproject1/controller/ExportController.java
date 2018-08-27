@@ -9,9 +9,11 @@ import com.mycompany.mavenproject1.util.MyTableInfo;
 import com.mycompany.mavenproject1.config.WebConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -58,14 +60,15 @@ public class ExportController {
         return "welcome1";
     }
 
-    @RequestMapping(value="/download/", method = RequestMethod.GET)
+    @RequestMapping(value="/download", method = RequestMethod.GET)
     public void  generateExcel() throws SQLException, ClassNotFoundException, FileNotFoundException, IOException{
             Workbook wb = null;
             Connection conn = null;
             PreparedStatement stmt = null;
             ResultSet rs = null;
+            Class.forName("com.mysql.jdbc.Driver");
         try {
-            conn = DriverManager.getConnection(WebConfig.DRIVER,WebConfig.USERNAME,WebConfig.PASSWORD);
+            conn = DriverManager.getConnection(WebConfig.URL,WebConfig.USERNAME,WebConfig.PASSWORD);
             //New Workbook
             wb = new SXSSFWorkbook(2000);
             //Cell style for header row
@@ -122,9 +125,34 @@ public class ExportController {
                   } 
                 }
             }
-            System.out.println("data written");
+
+        /*File file = new File("Foo.txt");
+        try (PrintStream ps = new PrintStream(file)) {
+           ps.println("Bar");
+        }
+        response.setContentType("application/octet-stream");
+        response.setContentLength((int) file.length());
+        response.setHeader( "Content-Disposition",String.format("attachment; filename=\"%s\"", file.getName()));
+
+        OutputStream out = response.getOutputStream();
+        try (FileInputStream in = new FileInputStream(file)) {
+            byte[] buffer = new byte[4096];
+            int length;
+            while ((length = in.read(buffer)) > 0) {
+                //out.write(buffer, 0, length);
+                wb.write(buffer, 0, length);
+            }
+        }
+        out.flush();*/
+
+  // Write the output to a file
+        FileOutputStream fileOut = new FileOutputStream("/home/tam/Documents/poi-generated-file.xlsx");
+        wb.write(fileOut);
+        fileOut.close();
+
+            /*System.out.println("data written");
             String excelFile = "/home/tam/Documents/export.xlsx";
-            wb.write(new FileOutputStream(excelFile));
+            wb.write(new FileOutputStream(excelFile));*/
             System.out.println("Completed");	
         }
         finally{

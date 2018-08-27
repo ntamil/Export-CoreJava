@@ -16,7 +16,7 @@ public class WebConfig {
 
     public static final String DRIVER = "com.mysql.jdbc.Driver";
 
-    public static final String URL = "jdbc:mysql://localhost/tamil_20_08_2018";
+    public static final String URL = "jdbc:mysql://localhost:3306/tamil_20_08_2018";
 
     public static final String USERNAME = "root";
 
