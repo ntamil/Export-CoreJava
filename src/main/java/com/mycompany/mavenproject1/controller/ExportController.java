@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
+import jdk.nashorn.internal.parser.JSONParser;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -37,15 +39,19 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 //import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 //import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+
 
 /**
  *
@@ -65,9 +71,58 @@ public class ExportController {
         return "welcome1";
     }
 
+    @RequestMapping(value="/export", method = RequestMethod.GET)
+    public String export(@RequestParam("arg1") String arg1) {
+        System.out.println(arg1);
+        return "export"+arg1;
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/custom")
+    public String controllerMethod(@RequestParam Map<String, String> customQuery) {
+
+        System.out.println("customQuery = brand " + customQuery.containsKey("brand"));
+        System.out.println("customQuery = limit " + customQuery.containsKey("limit"));
+        System.out.println("customQuery = price " + customQuery.containsKey("price"));
+        System.out.println("customQuery = other " + customQuery.containsKey("other"));
+        System.out.println("customQuery = sort " + customQuery.containsKey("sort"));
+
+        return customQuery.toString();
+    }
+
+@RequestMapping(path = "/generate/post", method = RequestMethod.POST, consumes = "application/json")
+public String generate(@RequestBody String objectKey) {
+    /*
+    http://localhost:8080/mavenproject1/generate/post
+    {
+	"project": "springer",
+	"reportName": "Tracktitle",
+	"procedure": "tracktitle",
+	"params": [1,2]
+    }
+    */
+    JSONObject jsonObj = new JSONObject(objectKey);
+    String project = jsonObj.getString("project");
+    String reportName = jsonObj.getString("reportName");
+    String procedure = jsonObj.getString("procedure");
+    JSONArray params = jsonObj.getJSONArray("params");
+    //return project;
+    return params.toString();
+}
+
+    @RequestMapping(value = "/downloadFile", method = RequestMethod.GET, produces = "application/vnd.ms-excel")
+    public void  downloadFile(@RequestParam String fileName, HttpServletResponse response) throws ClassNotFoundException, FileNotFoundException, IOException{
+        InputStream inputStream = null;
+        File file = null;
+        file = new File("/home/tam/Documents/"+fileName);
+        inputStream = new BufferedInputStream(new FileInputStream(file));
+        response.setHeader("Content-Disposition", "attachment; filename="+fileName);
+        response.setHeader("Content-Type", "application/vnd.ms-excel");
+        FileCopyUtils.copy(inputStream, response.getOutputStream());
+    }
+    
     //@RequestMapping(value="/download", method = RequestMethod.GET)
-    @RequestMapping(value = "/download", method = RequestMethod.GET, produces = "application/vnd.ms-excel")
-    public void  generateExcel(HttpServletResponse response) throws SQLException, ClassNotFoundException, FileNotFoundException, IOException{
+    @RequestMapping(value = "/download", method = RequestMethod.GET /*, produces = "application/vnd.ms-excel"*/)
+    public String  generateExcel(HttpServletResponse response) throws SQLException, ClassNotFoundException, FileNotFoundException, IOException{
             Workbook wb = null;
             Connection conn = null;
             PreparedStatement stmt = null;
@@ -89,8 +144,8 @@ public class ExportController {
             cs.setFont(f);
             //New Sheet
             Sheet sheet1 = wb.createSheet("myData");
-            //String sql = "SELECT * FROM member_data WHERE 1";
-            String sql = "call track_title(0)";
+            String sql = "SELECT * FROM member_data WHERE 1";
+            //String sql = "call track_title(0)";
             stmt = conn.prepareStatement(sql);
             rs = stmt.executeQuery();
            // System.out.println(rs);
@@ -134,42 +189,19 @@ public class ExportController {
                   } 
                 }
             }
-
-        /*File file = new File("Foo.txt");
-        try (PrintStream ps = new PrintStream(file)) {
-           ps.println("Bar");
-        }
-        response.setContentType("application/octet-stream");
-        response.setContentLength((int) file.length());
-        response.setHeader( "Content-Disposition",String.format("attachment; filename=\"%s\"", file.getName()));
-
-        OutputStream out = response.getOutputStream();
-        try (FileInputStream in = new FileInputStream(file)) {
-            byte[] buffer = new byte[4096];
-            int length;
-            while ((length = in.read(buffer)) > 0) {
-                //out.write(buffer, 0, length);
-                wb.write(buffer, 0, length);
-            }
-        }
-        out.flush();*/
-
-  // Write the output to a file
-        FileOutputStream fileOut = new FileOutputStream("poi-generated-file.xlsx");
+  
+        String fileName = "poi-generated-file1.xlsx";
+        FileOutputStream fileOut = new FileOutputStream("/home/tam/Documents/"+fileName);
         wb.write(fileOut);
         fileOut.close();
-
+/*
         file = new File("poi-generated-file.xlsx");
-
         inputStream = new BufferedInputStream(new FileInputStream(file));
-        response.setHeader("Content-Disposition", "attachment; filename=TrackTitle.xlsx");
+        response.setHeader("Content-Disposition", "attachment; filename=poi-generated-file.xlsx");
         response.setHeader("Content-Type", "application/vnd.ms-excel");
         FileCopyUtils.copy(inputStream, response.getOutputStream());
-
-            /*System.out.println("data written");
-            String excelFile = "/home/tam/Documents/export.xlsx";
-            wb.write(new FileOutputStream(excelFile));
-            System.out.println("Completed");*/
+*/
+         return fileName;
         }
         finally{
             try{
